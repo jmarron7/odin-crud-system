@@ -6,17 +6,20 @@ import "core:fmt"
 import "core:sync"
 import "core:encoding/uuid"
 
+// Entity struct for our data
 Entity :: struct {
     id:     string,
     data:   string,
 }
 
+// CRUD System that holds our entities and history
 CRUDSystem :: struct {
     entities:   map[string]Entity,
     history:    [dynamic]UndoAction,
     mutex:      sync.Mutex,
 }
 
+// Action_Type enum for different CRUD actions
 Action_Type :: enum {
     Create,
     Read,
@@ -24,11 +27,13 @@ Action_Type :: enum {
     Delete,
 }
 
+// UndoAction struct to keep track of actions
 UndoAction :: struct {
     action_type:    Action_Type,
     entity:         Entity,
 }
 
+// Create new entity
 create :: proc(self: ^CRUDSystem, data: string) {
     sync.mutex_lock(&self.mutex)
     defer sync.mutex_unlock(&self.mutex)
@@ -42,11 +47,11 @@ create :: proc(self: ^CRUDSystem, data: string) {
     }
 
     entity := Entity{id, data}
-    // self.entities[id] = entity
     self.entities[id] = entity
     runtime.append_elem(&self.history, UndoAction{.Create, entity})
 }
 
+// Read an entity by ID
 read_entity :: proc(self: ^CRUDSystem, id: string) -> (^Entity, bool) {
     sync.mutex_lock(&self.mutex)
     defer sync.mutex_unlock(&self.mutex)
@@ -55,10 +60,9 @@ read_entity :: proc(self: ^CRUDSystem, id: string) -> (^Entity, bool) {
         return &self.entities[id], true
     }
     return nil, false
-    // entity := self.entities[id]
-    // fmt.println("Entity ID:", entity.id, "Data:", entity.data)
 }
 
+// Read all entities
 read_all :: proc(self: ^CRUDSystem) -> []Entity {
     sync.mutex_lock(&self.mutex)
     defer sync.mutex_unlock(&self.mutex)
@@ -70,8 +74,7 @@ read_all :: proc(self: ^CRUDSystem) -> []Entity {
     return entities[:]
 }
 
-
-
+// Update an entity by ID
 update :: proc(self: ^CRUDSystem, id: string, new_data: string) {
     sync.mutex_lock(&self.mutex)
     defer sync.mutex_unlock(&self.mutex)
@@ -87,6 +90,7 @@ update :: proc(self: ^CRUDSystem, id: string, new_data: string) {
     runtime.append_elem(&self.history, UndoAction{.Update, old_entity})
 }
 
+// Delete an entity by ID
 delete_entity :: proc(self: ^CRUDSystem, id: string) {
     sync.mutex_lock(&self.mutex)
     defer sync.mutex_unlock(&self.mutex)
@@ -101,6 +105,7 @@ delete_entity :: proc(self: ^CRUDSystem, id: string) {
     runtime.append_elem(&self.history, UndoAction{.Delete, entity})
 }
 
+// Undo the last action
 undo :: proc(self: ^CRUDSystem) {
     sync.mutex_lock(&self.mutex)
     defer sync.mutex_unlock(&self.mutex)

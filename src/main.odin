@@ -21,6 +21,15 @@ main :: proc() {
     }
     fmt.println("------------------")
 
+     // Read an entity by ID
+     entity, found := crudsys.read_entity(&crud, entities[0].id)
+     if found {
+         fmt.println("Read Entity ID:", entity.id, "Data:", entity.data)
+     } else {
+         fmt.println("Entity not found.")
+     }
+     fmt.println("------------------")
+
     // Update an entity
     crudsys.update(&crud, entities[0].id, "Updated Entity")
 
